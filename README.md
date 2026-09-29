@@ -9,9 +9,9 @@ Today**, and **Budget** so far; **Today's Schedule** comes in a later round.
 - **Capture bar** (top of the page, above every widget): type a thought and
   hit Add or Enter. It's pinned so it's always reachable — this is the
   whole point, zero friction to jot something down.
-- **Widget layout**: Brain Dump, Due Today, and Budget all show at once —
-  side by side in a grid on desktop, stacked on mobile. Nothing is hidden
-  behind a click; everything loads as soon as you log in.
+- **Widget layout**: Brain Dump, Due Today, and Budget all show at once,
+  stacked top to bottom. Nothing is hidden behind a click; everything
+  loads as soon as you log in.
 - **Brain Dump widget**: shows everything you've captured, oldest pending
   first (so the longest-neglected ones rise to the top instead of getting
   buried). A pending note gets a colored left border once it's sat
