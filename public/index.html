@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Dashboard</title>
-<link rel="stylesheet" href="/shared.css?v=3" />
+<link rel="stylesheet" href="/shared.css?v=4" />
 </head>
 <body>
 
@@ -27,15 +27,9 @@
     <button id="capture-submit">Add</button>
   </div>
 
-  <div id="tab-bar">
-    <button class="tab-btn active" data-tab="braindump">Brain Dump</button>
-    <button class="tab-btn" data-tab="duetoday">Due Today</button>
-    <button class="tab-btn" data-tab="budget">Budget</button>
-    <!-- Schedule tab lands here in a later round -->
-  </div>
-
-  <main>
-    <section id="tab-braindump">
+  <main id="widget-grid">
+    <div class="widget" id="widget-braindump">
+      <h2 class="widget-title">Brain Dump</h2>
       <div class="card">
         <div id="notes-empty" class="empty-state" style="display:none;">
           Nothing pending. Drop a thought in the bar above any time.
@@ -46,9 +40,10 @@
         <div class="note-meta" style="margin-bottom:8px;">Done</div>
         <div id="notes-done"></div>
       </div>
-    </section>
+    </div>
 
-    <section id="tab-duetoday" style="display:none;">
+    <div class="widget" id="widget-duetoday">
+      <h2 class="widget-title">Due Today</h2>
       <div class="card" id="duetoday-unconfigured" style="display:none;">
         Daily Planner isn't connected yet — set <code>DAILY_PLANNER_API_URL</code>
         and <code>DAILY_PLANNER_API_KEY</code> in Dashboard's <code>.env</code>.
@@ -72,9 +67,10 @@
         <div class="note-meta" style="margin-bottom:8px;">Done</div>
         <div id="tasks-done"></div>
       </div>
-    </section>
+    </div>
 
-    <section id="tab-budget" style="display:none;">
+    <div class="widget" id="widget-budget">
+      <h2 class="widget-title">Budget</h2>
       <div class="card" id="budget-unconfigured" style="display:none;">
         Budget Dashboard isn't connected yet — set <code>BUDGET_API_URL</code>
         and <code>BUDGET_API_KEY</code> in Dashboard's <code>.env</code>.
@@ -105,11 +101,11 @@
       <div class="card empty-state" id="budget-ontrack" style="display:none;">
         Everything's on track this month.
       </div>
-    </section>
+    </div>
   </main>
 </div>
 
 <script src="/ui-helpers.js?v=1"></script>
-<script src="/app.js?v=3"></script>
+<script src="/app.js?v=4"></script>
 </body>
 </html>

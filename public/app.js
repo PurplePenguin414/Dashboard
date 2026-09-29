@@ -24,22 +24,11 @@ function showLogin() {
 function showApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-shell').style.display = 'flex';
+  // All widgets are visible at once now (no tabs) — load everything up front.
   loadNotes();
+  loadTasks();
+  loadBudget();
 }
-
-// --- Tabs ---
-document.querySelectorAll('.tab-btn').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('tab-braindump').style.display = 'none';
-    document.getElementById('tab-duetoday').style.display = 'none';
-    document.getElementById('tab-budget').style.display = 'none';
-    document.getElementById(`tab-${btn.dataset.tab}`).style.display = 'block';
-    if (btn.dataset.tab === 'duetoday') loadTasks();
-    if (btn.dataset.tab === 'budget') loadBudget();
-  });
-});
 
 async function checkSession() {
   const { authed } = await fetch('/api/session').then((r) => r.json());

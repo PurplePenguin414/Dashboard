@@ -1,19 +1,21 @@
 # Dashboard — dashboard.megangibbs.net
 
-A self-hosted, password-protected daily dashboard. Ships the **Brain Dump**
-tab, the globally-pinned capture bar, and the **Due Today** tab so far;
-**Budget Snapshot** and **Today's Schedule** tabs come in later rounds.
+A self-hosted, password-protected daily dashboard. All of it shows on one
+page as widgets — no tabs to click between. Ships **Brain Dump**, **Due
+Today**, and **Budget** so far; **Today's Schedule** comes in a later round.
 
 ## How it works
 
-- **Capture bar** (top of every screen, every tab): type a thought and hit
-  Add or Enter. It's pinned so it's always reachable no matter which tab
-  you're looking at — this is the whole point, zero friction to jot
-  something down.
-- **Brain Dump tab**: shows everything you've captured, oldest pending first
-  (so the longest-neglected ones rise to the top instead of getting buried).
-  A pending note gets a colored left border once it's sat untouched for 3+
-  days — a visual nudge, not a notification.
+- **Capture bar** (top of the page, above every widget): type a thought and
+  hit Add or Enter. It's pinned so it's always reachable — this is the
+  whole point, zero friction to jot something down.
+- **Widget layout**: Brain Dump, Due Today, and Budget all show at once —
+  side by side in a grid on desktop, stacked on mobile. Nothing is hidden
+  behind a click; everything loads as soon as you log in.
+- **Brain Dump widget**: shows everything you've captured, oldest pending
+  first (so the longest-neglected ones rise to the top instead of getting
+  buried). A pending note gets a colored left border once it's sat
+  untouched for 3+ days — a visual nudge, not a notification.
 - **Done**: mark a note Done and it moves to a collapsed "Done" section
   (most recent first, last 20 shown) instead of disappearing outright.
 - **Delete**: removes a note permanently, pending or done.
@@ -21,15 +23,25 @@ tab, the globally-pinned capture bar, and the **Due Today** tab so far;
 There's deliberately no "push this note into Daily Planner" feature — that
 was considered and dropped as not something that'd actually get used here.
 
-- **Due Today tab**: fully interactive, backed by Daily Planner's Tasks
+- **Due Today widget**: fully interactive, backed by Daily Planner's Tasks
   panel over a key-protected API — nothing is duplicated or cached here.
   Check a task off, add a new one, or delete one right from Dashboard and
   it's reflected in Daily Planner immediately (and vice versa). This
   server holds the shared API key; the browser never sees it, it just
   talks to Dashboard's own `/api/due-today` routes with the normal login
   session, and Dashboard forwards to Daily Planner behind the scenes.
-  If the tab shows a "Daily Planner isn't connected yet" message, the
+  If the widget shows a "Daily Planner isn't connected yet" message, the
   `DAILY_PLANNER_API_URL`/`DAILY_PLANNER_API_KEY` pair below isn't set.
+- **Budget widget**: read-only — this month's income, expenses, savings
+  rate, and any categories running over or near target, pulled straight
+  from Budget Dashboard's existing iOS-widget API (no new API needed
+  there). Same key-protected-proxy pattern as Due Today.
+
+A note on the proxied widgets: if the downstream app (Daily Planner or
+Budget Dashboard) rejects the shared key, this server reports that as a
+"couldn't reach" error on the widget itself — it deliberately never
+forwards that as a 401, so a key mismatch on one widget can't be confused
+with you being logged out of Dashboard.
 
 ## Local install
 
@@ -50,11 +62,14 @@ SESSION_SECRET=some-long-random-string
 APP_PASSWORD_HASH=$2b$12$...   # from the command above
 DAILY_PLANNER_API_URL=http://daily-planner:3000   # container name, not host port — only matters once deployed
 DAILY_PLANNER_API_KEY=                            # must match DASHBOARD_API_KEY in Daily Planner's .env
+BUDGET_API_URL=http://budget-dashboard:3000
+BUDGET_API_KEY=                                   # must match WIDGET_API_KEY in Budget Dashboard's .env
 ```
 
-The last two are only needed for the Due Today tab. Locally, without both
-apps running in Docker on the same network, leave them blank — the tab
-just shows "Daily Planner isn't connected yet" instead of erroring.
+The last four are only needed for the Due Today and Budget widgets.
+Locally, without those apps running in Docker on the same network, leave
+them blank — the widget just shows "isn't connected yet" instead of
+erroring.
 
 Then:
 
@@ -171,16 +186,18 @@ password or your saved notes.
 
 ## Roadmap
 
-Planned build order for the remaining tabs:
+Planned build order for the remaining widgets:
 1. ~~**Due Today**~~ — done. Tasks/To-do feature on Daily Planner, pulled
-   in here as a fully interactive tab (add/check off/delete, synced both
-   ways).
-2. **Budget Snapshot** — a new read-only external API on Budget
-   Dashboard (this month's income, expenses, savings %, over-budget
-   categories).
+   in here as a fully interactive widget (add/check off/delete, synced
+   both ways).
+2. ~~**Budget Snapshot**~~ — done. Reuses Budget Dashboard's existing
+   iOS-widget API, read-only.
 3. **Today's Schedule** — straight pull from Daily Planner's existing
    data, no merge logic needed since Med Tracker appointments already
    flow into Daily Planner.
+
+Note: the layout changed from tabs to always-visible widgets after the
+first round — everything above already reflects that.
 
 All three live on MLG-VPS02 alongside Daily Planner, Med Tracker, and
 Budget Dashboard, so they talk to each other over the existing local
