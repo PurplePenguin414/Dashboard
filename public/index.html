@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard</title>
+<link rel="stylesheet" href="/shared.css?v=1" />
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<div id="login-screen">
+  <div class="login-card">
+    <h1>Dashboard</h1>
+    <form id="login-form">
+      <input type="password" id="login-password" placeholder="Password" autocomplete="current-password" />
+      <div class="login-error" id="login-error"></div>
+      <button type="submit">Unlock</button>
+    </form>
+  </div>
+</div>
+
+<div id="app-shell" style="display:none;">
+  <div id="capture-bar">
+    <input type="text" id="capture-input" placeholder="Jot something down..." autocomplete="off" />
+    <button id="capture-submit">Add</button>
+  </div>
+
+  <div id="tab-bar">
+    <button class="tab-btn active" data-tab="braindump">Brain Dump</button>
+    <!-- Due Today, Budget, Schedule tabs land here in later rounds -->
+  </div>
+
+  <main>
+    <section id="tab-braindump">
+      <div class="card">
+        <div id="notes-empty" class="empty-state" style="display:none;">
+          Nothing pending. Drop a thought in the bar above any time.
+        </div>
+        <div id="notes-pending"></div>
+      </div>
+      <div class="card" id="notes-done-card" style="display:none;">
+        <div class="note-meta" style="margin-bottom:8px;">Done</div>
+        <div id="notes-done"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="/ui-helpers.js?v=1"></script>
+<script src="/app.js?v=1"></script>
+</body>
+</html>
