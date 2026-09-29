@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Dashboard</title>
-<link rel="stylesheet" href="/shared.css?v=2" />
+<link rel="stylesheet" href="/shared.css?v=3" />
 </head>
 <body>
 
@@ -30,7 +30,8 @@
   <div id="tab-bar">
     <button class="tab-btn active" data-tab="braindump">Brain Dump</button>
     <button class="tab-btn" data-tab="duetoday">Due Today</button>
-    <!-- Budget, Schedule tabs land here in later rounds -->
+    <button class="tab-btn" data-tab="budget">Budget</button>
+    <!-- Schedule tab lands here in a later round -->
   </div>
 
   <main>
@@ -72,10 +73,43 @@
         <div id="tasks-done"></div>
       </div>
     </section>
+
+    <section id="tab-budget" style="display:none;">
+      <div class="card" id="budget-unconfigured" style="display:none;">
+        Budget Dashboard isn't connected yet — set <code>BUDGET_API_URL</code>
+        and <code>BUDGET_API_KEY</code> in Dashboard's <code>.env</code>.
+      </div>
+      <div class="card" id="budget-error" style="display:none;">
+        Couldn't reach Budget Dashboard. <button class="secondary" id="budget-retry">Retry</button>
+      </div>
+      <div class="card" id="budget-summary" style="display:none;">
+        <div class="budget-stat-row">
+          <div class="budget-stat">
+            <div class="budget-stat-label">Income</div>
+            <div class="budget-stat-value" id="budget-income">$0</div>
+          </div>
+          <div class="budget-stat">
+            <div class="budget-stat-label">Expenses</div>
+            <div class="budget-stat-value" id="budget-expense">$0</div>
+          </div>
+          <div class="budget-stat">
+            <div class="budget-stat-label">Savings rate</div>
+            <div class="budget-stat-value" id="budget-savings-rate">0%</div>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="budget-attention-card" style="display:none;">
+        <div class="note-meta" style="margin-bottom:8px;">Categories over or near target</div>
+        <div id="budget-attention"></div>
+      </div>
+      <div class="card empty-state" id="budget-ontrack" style="display:none;">
+        Everything's on track this month.
+      </div>
+    </section>
   </main>
 </div>
 
 <script src="/ui-helpers.js?v=1"></script>
-<script src="/app.js?v=2"></script>
+<script src="/app.js?v=3"></script>
 </body>
 </html>

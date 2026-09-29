@@ -34,8 +34,10 @@ document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.classList.add('active');
     document.getElementById('tab-braindump').style.display = 'none';
     document.getElementById('tab-duetoday').style.display = 'none';
+    document.getElementById('tab-budget').style.display = 'none';
     document.getElementById(`tab-${btn.dataset.tab}`).style.display = 'block';
     if (btn.dataset.tab === 'duetoday') loadTasks();
+    if (btn.dataset.tab === 'budget') loadBudget();
   });
 });
 
@@ -305,6 +307,83 @@ async function removeTask(id) {
     loadTasks();
   } catch (err) {
     showError(err.message);
+  }
+}
+
+// --- Budget Snapshot (read-only, proxied through this server) ---
+
+document.getElementById('budget-retry').addEventListener('click', loadBudget);
+
+function formatMoney(n) {
+  const sign = n < 0 ? '-' : '';
+  return sign + '$' + Math.abs(Math.round(n)).toLocaleString();
+}
+
+function renderBudget(data) {
+  document.getElementById('budget-income').textContent = formatMoney(data.income);
+  document.getElementById('budget-expense').textContent = formatMoney(data.expense);
+  const rateEl = document.getElementById('budget-savings-rate');
+  rateEl.textContent = `${data.savingsRate}%`;
+  rateEl.className = 'budget-stat-value' + (data.savingsRate < 0 ? ' negative' : '');
+  document.getElementById('budget-summary').style.display = 'block';
+
+  const attentionCard = document.getElementById('budget-attention-card');
+  const attentionList = document.getElementById('budget-attention');
+  const onTrack = document.getElementById('budget-ontrack');
+  const flagged = (data.needs_attention || []).filter((c) => c.status === 'over' || c.status === 'near');
+
+  attentionList.innerHTML = '';
+  if (flagged.length) {
+    attentionCard.style.display = 'block';
+    onTrack.style.display = 'none';
+    for (const cat of flagged) {
+      const row = document.createElement('div');
+      row.className = 'category-row';
+
+      const name = document.createElement('div');
+      name.className = 'category-name';
+      name.textContent = cat.name;
+
+      const amounts = document.createElement('div');
+      amounts.className = 'category-amounts';
+      amounts.textContent = `${formatMoney(cat.actual)} / ${formatMoney(cat.target)}`;
+
+      const pct = document.createElement('div');
+      pct.className = 'category-pct ' + cat.status;
+      pct.textContent = `${cat.pct}%`;
+
+      row.appendChild(name);
+      row.appendChild(amounts);
+      row.appendChild(pct);
+      attentionList.appendChild(row);
+    }
+  } else {
+    attentionCard.style.display = 'none';
+    onTrack.style.display = 'block';
+  }
+}
+
+async function loadBudget() {
+  const unconfigured = document.getElementById('budget-unconfigured');
+  const errorCard = document.getElementById('budget-error');
+  const summary = document.getElementById('budget-summary');
+  const attentionCard = document.getElementById('budget-attention-card');
+  const onTrack = document.getElementById('budget-ontrack');
+  unconfigured.style.display = 'none';
+  errorCard.style.display = 'none';
+  try {
+    const data = await api('/api/budget-snapshot');
+    renderBudget(data);
+  } catch (err) {
+    if (err.message === 'Not authenticated') return;
+    summary.style.display = 'none';
+    attentionCard.style.display = 'none';
+    onTrack.style.display = 'none';
+    if (err.message && err.message.includes('not configured')) {
+      unconfigured.style.display = 'block';
+    } else {
+      errorCard.style.display = 'block';
+    }
   }
 }
 

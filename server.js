@@ -180,6 +180,27 @@ app.delete('/api/due-today/:id', requireAuth, async (req, res) => {
   }
 });
 
+// --- Budget Snapshot: proxies Budget Dashboard's existing widget/summary
+// API (built for its iOS widget, reused as-is — no new API needed). Same
+// server-side-key pattern as Due Today: the browser never sees the key. ---
+function budgetConfigured() {
+  return !!(process.env.BUDGET_API_URL && process.env.BUDGET_API_KEY);
+}
+
+app.get('/api/budget-snapshot', requireAuth, async (req, res) => {
+  if (!budgetConfigured()) return res.status(503).json({ error: 'BUDGET_API_URL / BUDGET_API_KEY not configured in .env' });
+  try {
+    const base = process.env.BUDGET_API_URL.replace(/\/$/, '');
+    const key = encodeURIComponent(process.env.BUDGET_API_KEY);
+    const response = await fetch(`${base}/api/widget/summary?key=${key}`);
+    const body = await response.json();
+    if (!response.ok) return res.status(response.status).json(body);
+    res.json(body);
+  } catch (err) {
+    res.status(502).json({ error: 'Could not reach Budget Dashboard', detail: err.message });
+  }
+});
+
 // --- Static frontend ---
 app.use(express.static(path.join(__dirname, 'public')));
 
