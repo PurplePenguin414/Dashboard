@@ -218,6 +218,32 @@ app.get('/api/budget-snapshot', requireAuth, async (req, res) => {
   }
 });
 
+// --- Today's Schedule: proxies Daily Planner's existing iOS-widget API
+// (read-only, weekly blocks + day entries merged and sorted by time — no
+// new API needed there). Different key from Due Today's on purpose: this
+// hits the read-only /api/widget/today endpoint, which checks Daily
+// Planner's WIDGET_API_KEY, not its DASHBOARD_API_KEY. ---
+function scheduleConfigured() {
+  return !!(process.env.DAILY_PLANNER_WIDGET_URL && process.env.DAILY_PLANNER_WIDGET_KEY);
+}
+
+app.get('/api/schedule', requireAuth, async (req, res) => {
+  if (!scheduleConfigured()) return res.status(503).json({ error: 'DAILY_PLANNER_WIDGET_URL / DAILY_PLANNER_WIDGET_KEY not configured in .env' });
+  try {
+    const base = process.env.DAILY_PLANNER_WIDGET_URL.replace(/\/$/, '');
+    const key = encodeURIComponent(process.env.DAILY_PLANNER_WIDGET_KEY);
+    const response = await fetch(`${base}/api/widget/today?key=${key}`);
+    const body = await response.json();
+    if (response.status === 401 || response.status === 403) {
+      return res.status(502).json({ error: 'Daily Planner rejected the widget API key — check DAILY_PLANNER_WIDGET_KEY matches WIDGET_API_KEY exactly' });
+    }
+    if (!response.ok) return res.status(response.status).json(body);
+    res.json(body);
+  } catch (err) {
+    res.status(502).json({ error: 'Could not reach Daily Planner', detail: err.message });
+  }
+});
+
 // --- Static frontend ---
 app.use(express.static(path.join(__dirname, 'public')));
 

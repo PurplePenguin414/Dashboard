@@ -2,16 +2,18 @@
 
 A self-hosted, password-protected daily dashboard. All of it shows on one
 page as widgets — no tabs to click between. Ships **Brain Dump**, **Due
-Today**, and **Budget** so far; **Today's Schedule** comes in a later round.
+Today**, **Budget**, and **Today's Schedule**.
 
 ## How it works
 
 - **Capture bar** (top of the page, above every widget): type a thought and
   hit Add or Enter. It's pinned so it's always reachable — this is the
   whole point, zero friction to jot something down.
-- **Widget layout**: Brain Dump, Due Today, and Budget all show at once,
-  stacked top to bottom. Nothing is hidden behind a click; everything
-  loads as soon as you log in.
+- **Widget layout**: Brain Dump, Due Today, and Budget stack top to bottom
+  on the left; Today's Schedule sits as a tall panel on the right. On
+  narrow screens (under 900px) Schedule drops below the rest instead —
+  there's no room for a side column on a phone. Nothing is hidden behind
+  a click; everything loads as soon as you log in.
 - **Brain Dump widget**: shows everything you've captured, oldest pending
   first (so the longest-neglected ones rise to the top instead of getting
   buried). A pending note gets a colored left border once it's sat
@@ -36,6 +38,12 @@ was considered and dropped as not something that'd actually get used here.
   rate, and any categories running over or near target, pulled straight
   from Budget Dashboard's existing iOS-widget API (no new API needed
   there). Same key-protected-proxy pattern as Due Today.
+- **Today's Schedule widget**: read-only — today's weekly blocks and
+  one-off entries, merged and sorted by time, straight from Daily
+  Planner's existing iOS-widget API (again, no new API needed). Uses a
+  *different* key than Due Today: `DAILY_PLANNER_WIDGET_KEY` must match
+  Daily Planner's `WIDGET_API_KEY` (its existing iOS widget key), not
+  `DASHBOARD_API_KEY` — the two protect different endpoints there.
 
 A note on the proxied widgets: if the downstream app (Daily Planner or
 Budget Dashboard) rejects the shared key, this server reports that as a
@@ -64,10 +72,13 @@ DAILY_PLANNER_API_URL=http://daily-planner:3000   # container name, not host por
 DAILY_PLANNER_API_KEY=                            # must match DASHBOARD_API_KEY in Daily Planner's .env
 BUDGET_API_URL=http://budget-dashboard:3000
 BUDGET_API_KEY=                                   # must match WIDGET_API_KEY in Budget Dashboard's .env
+DAILY_PLANNER_WIDGET_URL=http://daily-planner:3000
+DAILY_PLANNER_WIDGET_KEY=                         # must match WIDGET_API_KEY in Daily Planner's .env (not DASHBOARD_API_KEY)
 ```
 
-The last four are only needed for the Due Today and Budget widgets.
-Locally, without those apps running in Docker on the same network, leave
+The last six are only needed for the Due Today, Budget, and Schedule
+widgets. Locally, without those apps running in Docker on the same
+network, leave
 them blank — the widget just shows "isn't connected yet" instead of
 erroring.
 
@@ -116,15 +127,24 @@ Port **3060** is reserved for this app (next free port after 3010/3011/
    Confirm the printed `.env` shows `APP_PASSWORD_HASH=$$2b$$12$$...`
    (doubled `$`) before moving on — Compose will un-double them back to
    the real hash when it hands the value to the container.
-4. Add the Due Today tab's two lines to that same `.env` (append, don't
-   overwrite what step 3 wrote):
+4. Add the proxied-widget lines to that same `.env`. Appending with
+   several separate `echo >>` commands has a sharp edge if the file
+   doesn't already end in a newline (step 3's `printf` does end in one,
+   so appending is safe right after that step) — but if you're ever
+   unsure, rewrite the whole file in one `printf` instead of appending,
+   which sidesteps the issue entirely:
    ```bash
    echo "DAILY_PLANNER_API_URL=http://daily-planner:3000" >> .env
-   echo "DAILY_PLANNER_API_KEY=<paste the key you generated on Daily Planner>" >> .env
+   echo "DAILY_PLANNER_API_KEY=<DASHBOARD_API_KEY from Daily Planner's .env>" >> .env
+   echo "BUDGET_API_URL=http://budget-dashboard:3000" >> .env
+   echo "BUDGET_API_KEY=<WIDGET_API_KEY from Budget Dashboard's .env>" >> .env
+   echo "DAILY_PLANNER_WIDGET_URL=http://daily-planner:3000" >> .env
+   echo "DAILY_PLANNER_WIDGET_KEY=<WIDGET_API_KEY from Daily Planner's .env — NOT the same key as DAILY_PLANNER_API_KEY above>" >> .env
+   cat .env
    ```
-   That key must be the exact same value as `DASHBOARD_API_KEY` in Daily
-   Planner's own `.env` — if you haven't generated one there yet, see
-   Daily Planner's README.
+   Check the printed `.env` shows all six new lines separately (no line
+   with more than one `KEY=` in it, no stray `<`/`>` characters) before
+   moving on.
 5. Make sure the `apps-net` Docker network exists (harmless if it
    already does — the command just no-ops with a message):
    ```bash
@@ -175,26 +195,28 @@ Port **3060** is reserved for this app (next free port after 3010/3011/
 
 ### Updating the app later
 
+After uploading changed files on GitHub:
 ```bash
 cd /opt/dashboard
-git pull
-docker compose build && docker compose up -d
+git fetch origin && git reset --hard origin/main
+docker compose up -d --build
 ```
-
-`.env` and `db/` aren't tracked by git, so a pull never touches your
-password or your saved notes.
+`reset --hard` (rather than plain `git pull`) sidesteps the "diverged
+branches" error that shows up if the server's git history and GitHub's
+don't line up — safe here since `.env` and `db/` aren't tracked by git,
+so it never touches your password or your saved notes.
 
 ## Roadmap
 
-Planned build order for the remaining widgets:
-1. ~~**Due Today**~~ — done. Tasks/To-do feature on Daily Planner, pulled
-   in here as a fully interactive widget (add/check off/delete, synced
+All four widgets are done:
+1. ~~**Due Today**~~ — Tasks/To-do feature on Daily Planner, pulled in
+   here as a fully interactive widget (add/check off/delete, synced
    both ways).
-2. ~~**Budget Snapshot**~~ — done. Reuses Budget Dashboard's existing
+2. ~~**Budget Snapshot**~~ — reuses Budget Dashboard's existing
    iOS-widget API, read-only.
-3. **Today's Schedule** — straight pull from Daily Planner's existing
-   data, no merge logic needed since Med Tracker appointments already
-   flow into Daily Planner.
+3. ~~**Today's Schedule**~~ — reuses Daily Planner's existing
+   iOS-widget API, read-only, shown as a tall side panel next to the
+   other widgets on desktop (stacks to the bottom on narrow screens).
 
 Note: the layout changed from tabs to always-visible widgets after the
 first round — everything above already reflects that.

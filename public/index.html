@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Dashboard</title>
-<link rel="stylesheet" href="/shared.css?v=7" />
+<link rel="stylesheet" href="/shared.css?v=8" />
 </head>
 <body>
 
@@ -27,85 +27,104 @@
     <button id="capture-submit">Add</button>
   </div>
 
-  <main id="widget-grid">
-    <div class="widget" id="widget-braindump">
-      <h2 class="widget-title">Brain Dump</h2>
-      <div class="card">
-        <div id="notes-empty" class="empty-state" style="display:none;">
-          Nothing pending. Drop a thought in the bar above any time.
+  <main id="dashboard-layout">
+    <div id="widget-grid">
+      <div class="widget" id="widget-braindump">
+        <h2 class="widget-title">Brain Dump</h2>
+        <div class="card">
+          <div id="notes-empty" class="empty-state" style="display:none;">
+            Nothing pending. Drop a thought in the bar above any time.
+          </div>
+          <div id="notes-pending"></div>
         </div>
-        <div id="notes-pending"></div>
+        <div class="card" id="notes-done-card" style="display:none;">
+          <div class="note-meta" style="margin-bottom:8px;">Done</div>
+          <div id="notes-done"></div>
+        </div>
       </div>
-      <div class="card" id="notes-done-card" style="display:none;">
-        <div class="note-meta" style="margin-bottom:8px;">Done</div>
-        <div id="notes-done"></div>
+
+      <div class="widget" id="widget-duetoday">
+        <h2 class="widget-title">Due Today</h2>
+        <div class="card" id="duetoday-unconfigured" style="display:none;">
+          Daily Planner isn't connected yet — set <code>DAILY_PLANNER_API_URL</code>
+          and <code>DAILY_PLANNER_API_KEY</code> in Dashboard's <code>.env</code>.
+        </div>
+        <div class="card" id="duetoday-error" style="display:none;">
+          Couldn't reach Daily Planner. <button class="secondary" id="duetoday-retry">Retry</button>
+        </div>
+        <div class="card">
+          <form id="task-add-form">
+            <input type="text" id="task-add-title" placeholder="New task..." autocomplete="off" />
+            <button type="submit">Add</button>
+          </form>
+        </div>
+        <div class="card">
+          <div id="tasks-empty" class="empty-state" style="display:none;">
+            Nothing on the list.
+          </div>
+          <div id="tasks-open"></div>
+        </div>
+        <div class="card" id="tasks-done-card" style="display:none;">
+          <div class="note-meta" style="margin-bottom:8px;">Done</div>
+          <div id="tasks-done"></div>
+        </div>
+      </div>
+
+      <div class="widget" id="widget-budget">
+        <h2 class="widget-title">Budget</h2>
+        <div class="card" id="budget-unconfigured" style="display:none;">
+          Budget Dashboard isn't connected yet — set <code>BUDGET_API_URL</code>
+          and <code>BUDGET_API_KEY</code> in Dashboard's <code>.env</code>.
+        </div>
+        <div class="card" id="budget-error" style="display:none;">
+          Couldn't reach Budget Dashboard. <button class="secondary" id="budget-retry">Retry</button>
+        </div>
+        <div class="card" id="budget-summary" style="display:none;">
+          <div class="budget-stat-row">
+            <div class="budget-stat">
+              <div class="budget-stat-label">Income</div>
+              <div class="budget-stat-value" id="budget-income">$0</div>
+            </div>
+            <div class="budget-stat">
+              <div class="budget-stat-label">Expenses</div>
+              <div class="budget-stat-value" id="budget-expense">$0</div>
+            </div>
+            <div class="budget-stat">
+              <div class="budget-stat-label">Savings rate</div>
+              <div class="budget-stat-value" id="budget-savings-rate">0%</div>
+            </div>
+          </div>
+        </div>
+        <div class="card" id="budget-attention-card" style="display:none;">
+          <div class="note-meta" style="margin-bottom:8px;">Categories over or near target</div>
+          <div id="budget-attention"></div>
+        </div>
+        <div class="card empty-state" id="budget-ontrack" style="display:none;">
+          Everything's on track this month.
+        </div>
       </div>
     </div>
 
-    <div class="widget" id="widget-duetoday">
-      <h2 class="widget-title">Due Today</h2>
-      <div class="card" id="duetoday-unconfigured" style="display:none;">
-        Daily Planner isn't connected yet — set <code>DAILY_PLANNER_API_URL</code>
-        and <code>DAILY_PLANNER_API_KEY</code> in Dashboard's <code>.env</code>.
+    <div class="widget" id="widget-schedule">
+      <h2 class="widget-title">Today's Schedule</h2>
+      <div class="card" id="schedule-unconfigured" style="display:none;">
+        Daily Planner isn't connected yet — set <code>DAILY_PLANNER_WIDGET_URL</code>
+        and <code>DAILY_PLANNER_WIDGET_KEY</code> in Dashboard's <code>.env</code>.
       </div>
-      <div class="card" id="duetoday-error" style="display:none;">
-        Couldn't reach Daily Planner. <button class="secondary" id="duetoday-retry">Retry</button>
+      <div class="card" id="schedule-error" style="display:none;">
+        Couldn't reach Daily Planner. <button class="secondary" id="schedule-retry">Retry</button>
       </div>
-      <div class="card">
-        <form id="task-add-form">
-          <input type="text" id="task-add-title" placeholder="New task..." autocomplete="off" />
-          <button type="submit">Add</button>
-        </form>
+      <div class="card" id="schedule-empty-card" style="display:none;">
+        <div class="empty-state">Nothing on today's schedule.</div>
       </div>
-      <div class="card">
-        <div id="tasks-empty" class="empty-state" style="display:none;">
-          Nothing on the list.
-        </div>
-        <div id="tasks-open"></div>
-      </div>
-      <div class="card" id="tasks-done-card" style="display:none;">
-        <div class="note-meta" style="margin-bottom:8px;">Done</div>
-        <div id="tasks-done"></div>
-      </div>
-    </div>
-
-    <div class="widget" id="widget-budget">
-      <h2 class="widget-title">Budget</h2>
-      <div class="card" id="budget-unconfigured" style="display:none;">
-        Budget Dashboard isn't connected yet — set <code>BUDGET_API_URL</code>
-        and <code>BUDGET_API_KEY</code> in Dashboard's <code>.env</code>.
-      </div>
-      <div class="card" id="budget-error" style="display:none;">
-        Couldn't reach Budget Dashboard. <button class="secondary" id="budget-retry">Retry</button>
-      </div>
-      <div class="card" id="budget-summary" style="display:none;">
-        <div class="budget-stat-row">
-          <div class="budget-stat">
-            <div class="budget-stat-label">Income</div>
-            <div class="budget-stat-value" id="budget-income">$0</div>
-          </div>
-          <div class="budget-stat">
-            <div class="budget-stat-label">Expenses</div>
-            <div class="budget-stat-value" id="budget-expense">$0</div>
-          </div>
-          <div class="budget-stat">
-            <div class="budget-stat-label">Savings rate</div>
-            <div class="budget-stat-value" id="budget-savings-rate">0%</div>
-          </div>
-        </div>
-      </div>
-      <div class="card" id="budget-attention-card" style="display:none;">
-        <div class="note-meta" style="margin-bottom:8px;">Categories over or near target</div>
-        <div id="budget-attention"></div>
-      </div>
-      <div class="card empty-state" id="budget-ontrack" style="display:none;">
-        Everything's on track this month.
+      <div class="card" id="schedule-list-card" style="display:none;">
+        <div id="schedule-list"></div>
       </div>
     </div>
   </main>
 </div>
 
 <script src="/ui-helpers.js?v=1"></script>
-<script src="/app.js?v=4"></script>
+<script src="/app.js?v=5"></script>
 </body>
 </html>

@@ -28,6 +28,7 @@ function showApp() {
   loadNotes();
   loadTasks();
   loadBudget();
+  loadSchedule();
 }
 
 async function checkSession() {
@@ -368,6 +369,73 @@ async function loadBudget() {
     summary.style.display = 'none';
     attentionCard.style.display = 'none';
     onTrack.style.display = 'none';
+    if (err.message && err.message.includes('not configured')) {
+      unconfigured.style.display = 'block';
+    } else {
+      errorCard.style.display = 'block';
+    }
+  }
+}
+
+// --- Today's Schedule (read-only, proxied through this server) ---
+
+document.getElementById('schedule-retry').addEventListener('click', loadSchedule);
+
+function formatTime(timeStr) {
+  if (!timeStr) return '';
+  const [h, m] = timeStr.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const hour12 = h % 12 === 0 ? 12 : h % 12;
+  return `${hour12}:${String(m).padStart(2, '0')} ${period}`;
+}
+
+function renderSchedule(items) {
+  const emptyCard = document.getElementById('schedule-empty-card');
+  const listCard = document.getElementById('schedule-list-card');
+  const list = document.getElementById('schedule-list');
+  list.innerHTML = '';
+
+  if (!items.length) {
+    emptyCard.style.display = 'block';
+    listCard.style.display = 'none';
+    return;
+  }
+  emptyCard.style.display = 'none';
+  listCard.style.display = 'block';
+
+  for (const item of items) {
+    const row = document.createElement('div');
+    row.className = 'schedule-row';
+    if (item.color) row.style.borderLeftColor = item.color;
+
+    const time = document.createElement('div');
+    time.className = 'schedule-time';
+    time.textContent = item.start_time ? formatTime(item.start_time) : 'All day';
+
+    const title = document.createElement('div');
+    title.className = 'schedule-title';
+    title.textContent = item.title;
+
+    row.appendChild(time);
+    row.appendChild(title);
+    list.appendChild(row);
+  }
+}
+
+async function loadSchedule() {
+  const unconfigured = document.getElementById('schedule-unconfigured');
+  const errorCard = document.getElementById('schedule-error');
+  const emptyCard = document.getElementById('schedule-empty-card');
+  const listCard = document.getElementById('schedule-list-card');
+  unconfigured.style.display = 'none';
+  errorCard.style.display = 'none';
+  try {
+    const data = await api('/api/schedule');
+    renderSchedule(data.items || []);
+  } catch (err) {
+    if (err.message === 'Not authenticated') return;
+    emptyCard.style.display = 'none';
+    listCard.style.display = 'none';
     if (err.message && err.message.includes('not configured')) {
       unconfigured.style.display = 'block';
     } else {
