@@ -83,7 +83,7 @@ input[type="text"], textarea {
 main {
   flex: 1;
   padding: 16px;
-  max-width: 720px;
+  max-width: 1400px;
   width: 100%;
   margin: 0 auto;
 }
