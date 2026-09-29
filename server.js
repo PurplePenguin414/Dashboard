@@ -93,6 +93,93 @@ app.delete('/api/notes/:id', requireAuth, (req, res) => {
   }
 });
 
+// --- Due Today: proxies Daily Planner's key-protected external tasks API.
+// The API key lives only in this server's .env, never sent to the browser —
+// the browser talks to these /api/due-today routes with the normal session
+// cookie, and this server forwards to Daily Planner with the real key. ---
+function plannerConfigured() {
+  return !!(process.env.DAILY_PLANNER_API_URL && process.env.DAILY_PLANNER_API_KEY);
+}
+
+function plannerUrl(path) {
+  const base = process.env.DAILY_PLANNER_API_URL.replace(/\/$/, '');
+  const key = encodeURIComponent(process.env.DAILY_PLANNER_API_KEY);
+  const sep = path.includes('?') ? '&' : '?';
+  return `${base}${path}${sep}key=${key}`;
+}
+
+app.get('/api/due-today', requireAuth, async (req, res) => {
+  if (!plannerConfigured()) return res.status(503).json({ error: 'DAILY_PLANNER_API_URL / DAILY_PLANNER_API_KEY not configured in .env' });
+  try {
+    const response = await fetch(plannerUrl('/api/external/tasks'));
+    const body = await response.json();
+    if (!response.ok) return res.status(response.status).json(body);
+    res.json(body);
+  } catch (err) {
+    res.status(502).json({ error: 'Could not reach Daily Planner', detail: err.message });
+  }
+});
+
+app.post('/api/due-today', requireAuth, async (req, res) => {
+  if (!plannerConfigured()) return res.status(503).json({ error: 'DAILY_PLANNER_API_URL / DAILY_PLANNER_API_KEY not configured in .env' });
+  try {
+    const response = await fetch(plannerUrl('/api/external/tasks'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body),
+    });
+    const body = await response.json();
+    if (!response.ok) return res.status(response.status).json(body);
+    res.status(201).json(body);
+  } catch (err) {
+    res.status(502).json({ error: 'Could not reach Daily Planner', detail: err.message });
+  }
+});
+
+app.put('/api/due-today/:id', requireAuth, async (req, res) => {
+  if (!plannerConfigured()) return res.status(503).json({ error: 'DAILY_PLANNER_API_URL / DAILY_PLANNER_API_KEY not configured in .env' });
+  try {
+    const response = await fetch(plannerUrl(`/api/external/tasks/${req.params.id}`), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body),
+    });
+    const body = await response.json();
+    if (!response.ok) return res.status(response.status).json(body);
+    res.json(body);
+  } catch (err) {
+    res.status(502).json({ error: 'Could not reach Daily Planner', detail: err.message });
+  }
+});
+
+app.put('/api/due-today/:id/done', requireAuth, async (req, res) => {
+  if (!plannerConfigured()) return res.status(503).json({ error: 'DAILY_PLANNER_API_URL / DAILY_PLANNER_API_KEY not configured in .env' });
+  try {
+    const response = await fetch(plannerUrl(`/api/external/tasks/${req.params.id}/done`), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body),
+    });
+    const body = await response.json();
+    if (!response.ok) return res.status(response.status).json(body);
+    res.json(body);
+  } catch (err) {
+    res.status(502).json({ error: 'Could not reach Daily Planner', detail: err.message });
+  }
+});
+
+app.delete('/api/due-today/:id', requireAuth, async (req, res) => {
+  if (!plannerConfigured()) return res.status(503).json({ error: 'DAILY_PLANNER_API_URL / DAILY_PLANNER_API_KEY not configured in .env' });
+  try {
+    const response = await fetch(plannerUrl(`/api/external/tasks/${req.params.id}`), { method: 'DELETE' });
+    const body = await response.json();
+    if (!response.ok) return res.status(response.status).json(body);
+    res.json(body);
+  } catch (err) {
+    res.status(502).json({ error: 'Could not reach Daily Planner', detail: err.message });
+  }
+});
+
 // --- Static frontend ---
 app.use(express.static(path.join(__dirname, 'public')));
 

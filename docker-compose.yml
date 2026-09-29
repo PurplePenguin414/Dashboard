@@ -9,3 +9,10 @@ services:
       - "127.0.0.1:3060:3000"  # reserved for Dashboard on MLG-VPS02
     volumes:
       - ./db:/app/db
+    networks:
+      - default
+      - apps-net
+
+networks:
+  apps-net:
+    external: true

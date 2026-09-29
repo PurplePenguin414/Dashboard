@@ -27,6 +27,18 @@ function showApp() {
   loadNotes();
 }
 
+// --- Tabs ---
+document.querySelectorAll('.tab-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-braindump').style.display = 'none';
+    document.getElementById('tab-duetoday').style.display = 'none';
+    document.getElementById(`tab-${btn.dataset.tab}`).style.display = 'block';
+    if (btn.dataset.tab === 'duetoday') loadTasks();
+  });
+});
+
 async function checkSession() {
   const { authed } = await fetch('/api/session').then((r) => r.json());
   if (authed) showApp();
@@ -178,6 +190,119 @@ async function removeNote(id) {
   try {
     await api(`/api/notes/${id}`, { method: 'DELETE' });
     loadNotes();
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+// --- Due Today (proxied through this server to Daily Planner) ---
+
+document.getElementById('task-add-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const input = document.getElementById('task-add-title');
+  const title = input.value.trim();
+  if (!title) return;
+  try {
+    await api('/api/due-today', { method: 'POST', body: JSON.stringify({ title }) });
+    input.value = '';
+    showToast('Added');
+    loadTasks();
+  } catch (err) {
+    showError(err.message);
+  }
+});
+
+document.getElementById('duetoday-retry').addEventListener('click', loadTasks);
+
+function renderTasks(open, done) {
+  const openContainer = document.getElementById('tasks-open');
+  const empty = document.getElementById('tasks-empty');
+  openContainer.innerHTML = '';
+  empty.style.display = open.length ? 'none' : 'block';
+
+  for (const task of open) {
+    openContainer.appendChild(buildTaskRow(task, false));
+  }
+
+  const doneCard = document.getElementById('tasks-done-card');
+  const doneContainer = document.getElementById('tasks-done');
+  doneContainer.innerHTML = '';
+  doneCard.style.display = done.length ? 'block' : 'none';
+
+  for (const task of done.slice(0, 20)) {
+    doneContainer.appendChild(buildTaskRow(task, true));
+  }
+}
+
+function buildTaskRow(task, isDone) {
+  const row = document.createElement('div');
+  row.className = 'task-row' + (isDone ? ' done' : '');
+
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.checked = isDone;
+  checkbox.addEventListener('change', () => toggleTaskDone(task.id, checkbox.checked));
+
+  const textWrap = document.createElement('div');
+  textWrap.style.flex = '1';
+  const title = document.createElement('div');
+  title.className = 'task-title';
+  title.textContent = task.title;
+  textWrap.appendChild(title);
+  if (task.notes) {
+    const notes = document.createElement('div');
+    notes.className = 'task-notes';
+    notes.textContent = task.notes;
+    textWrap.appendChild(notes);
+  }
+
+  const actions = document.createElement('div');
+  actions.className = 'note-actions';
+  const delBtn = document.createElement('button');
+  delBtn.className = 'secondary';
+  delBtn.textContent = 'Delete';
+  delBtn.addEventListener('click', () => removeTask(task.id));
+  actions.appendChild(delBtn);
+
+  row.appendChild(checkbox);
+  row.appendChild(textWrap);
+  row.appendChild(actions);
+  return row;
+}
+
+async function loadTasks() {
+  const unconfigured = document.getElementById('duetoday-unconfigured');
+  const errorCard = document.getElementById('duetoday-error');
+  unconfigured.style.display = 'none';
+  errorCard.style.display = 'none';
+  try {
+    const data = await api('/api/due-today');
+    renderTasks(data.open || [], data.done || []);
+  } catch (err) {
+    if (err.message === 'Not authenticated') return;
+    if (err.message && err.message.includes('not configured')) {
+      unconfigured.style.display = 'block';
+    } else {
+      errorCard.style.display = 'block';
+    }
+  }
+}
+
+async function toggleTaskDone(id, done) {
+  try {
+    await api(`/api/due-today/${id}/done`, { method: 'PUT', body: JSON.stringify({ done }) });
+    loadTasks();
+  } catch (err) {
+    showError(err.message);
+    loadTasks();
+  }
+}
+
+async function removeTask(id) {
+  try {
+    await api(`/api/due-today/${id}`, { method: 'DELETE' });
+    showToast('Deleted');
+    loadTasks();
   } catch (err) {
     showError(err.message);
   }

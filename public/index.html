@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Dashboard</title>
-<link rel="stylesheet" href="/shared.css?v=1" />
+<link rel="stylesheet" href="/shared.css?v=2" />
 </head>
 <body>
 
@@ -29,7 +29,8 @@
 
   <div id="tab-bar">
     <button class="tab-btn active" data-tab="braindump">Brain Dump</button>
-    <!-- Due Today, Budget, Schedule tabs land here in later rounds -->
+    <button class="tab-btn" data-tab="duetoday">Due Today</button>
+    <!-- Budget, Schedule tabs land here in later rounds -->
   </div>
 
   <main>
@@ -45,10 +46,36 @@
         <div id="notes-done"></div>
       </div>
     </section>
+
+    <section id="tab-duetoday" style="display:none;">
+      <div class="card" id="duetoday-unconfigured" style="display:none;">
+        Daily Planner isn't connected yet — set <code>DAILY_PLANNER_API_URL</code>
+        and <code>DAILY_PLANNER_API_KEY</code> in Dashboard's <code>.env</code>.
+      </div>
+      <div class="card" id="duetoday-error" style="display:none;">
+        Couldn't reach Daily Planner. <button class="secondary" id="duetoday-retry">Retry</button>
+      </div>
+      <div class="card">
+        <form id="task-add-form">
+          <input type="text" id="task-add-title" placeholder="New task..." autocomplete="off" />
+          <button type="submit">Add</button>
+        </form>
+      </div>
+      <div class="card">
+        <div id="tasks-empty" class="empty-state" style="display:none;">
+          Nothing on the list.
+        </div>
+        <div id="tasks-open"></div>
+      </div>
+      <div class="card" id="tasks-done-card" style="display:none;">
+        <div class="note-meta" style="margin-bottom:8px;">Done</div>
+        <div id="tasks-done"></div>
+      </div>
+    </section>
   </main>
 </div>
 
 <script src="/ui-helpers.js?v=1"></script>
-<script src="/app.js?v=1"></script>
+<script src="/app.js?v=2"></script>
 </body>
 </html>
