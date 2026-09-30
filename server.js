@@ -42,6 +42,16 @@ function requireAuth(req, res, next) {
   return res.status(401).json({ error: 'Not authenticated' });
 }
 
+// Key-protected, no session — for the iOS Scriptable widgets, same pattern
+// every other app here uses for its own widget API.
+function requireWidgetKey(req, res, next) {
+  const WIDGET_API_KEY = process.env.WIDGET_API_KEY || '';
+  if (!WIDGET_API_KEY) return res.status(503).json({ error: 'WIDGET_API_KEY not configured on this server' });
+  const providedKey = req.query.key || req.headers['x-api-key'];
+  if (providedKey !== WIDGET_API_KEY) return res.status(401).json({ error: 'Invalid or missing API key' });
+  next();
+}
+
 // --- Auth ---
 app.post('/api/login', async (req, res) => {
   const { password } = req.body || {};
@@ -239,6 +249,29 @@ app.get('/api/schedule', requireAuth, async (req, res) => {
     }
     if (!response.ok) return res.status(response.status).json(body);
     res.json(body);
+  } catch (err) {
+    res.status(502).json({ error: 'Could not reach Daily Planner', detail: err.message });
+  }
+});
+
+// --- iOS Scriptable widgets: Brain Dump and Due Today ---
+// Key-protected, no session — these are hit directly by the Scriptable app
+// on your phone, which can't hold a login session. Brain Dump reads this
+// server's own database directly; Due Today re-forwards to Daily Planner
+// with this server's already-stored key, same as the browser-facing proxy
+// above, so the Scriptable script only ever needs Dashboard's own key.
+app.get('/api/widget/braindump', requireWidgetKey, (req, res) => {
+  const { pending } = listNotes(db);
+  res.json({ pending, staleDays: STALE_DAYS });
+});
+
+app.get('/api/widget/tasks', requireWidgetKey, async (req, res) => {
+  if (!plannerConfigured()) return res.status(503).json({ error: 'DAILY_PLANNER_API_URL / DAILY_PLANNER_API_KEY not configured in .env' });
+  try {
+    const response = await fetch(plannerUrl('/api/external/tasks'));
+    const body = await response.json();
+    if (!response.ok) return res.status(502).json({ error: 'Could not reach Daily Planner' });
+    res.json({ open: body.open || [] });
   } catch (err) {
     res.status(502).json({ error: 'Could not reach Daily Planner', detail: err.message });
   }

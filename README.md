@@ -45,6 +45,17 @@ was considered and dropped as not something that'd actually get used here.
   Daily Planner's `WIDGET_API_KEY` (its existing iOS widget key), not
   `DASHBOARD_API_KEY` — the two protect different endpoints there.
 
+## iPhone home screen widgets
+
+Two Scriptable widgets are included in `ios-widget/` — one for Brain Dump,
+one for Due Today (tasks). Both are read-only (check things off from the
+app itself, not the widget) and both work as small or medium home screen
+widgets, same setup as your other apps' widgets: install the free
+Scriptable app, paste the script in, set `WIDGET_KEY` to your
+`WIDGET_API_KEY` from `.env` (same key for both scripts), then add the
+widget from your home screen and point it at the matching script name.
+Full steps are in the comments at the top of each file.
+
 A note on the proxied widgets: if the downstream app (Daily Planner or
 Budget Dashboard) rejects the shared key, this server reports that as a
 "couldn't reach" error on the widget itself — it deliberately never
